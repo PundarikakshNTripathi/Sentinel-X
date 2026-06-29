@@ -12,15 +12,28 @@ function connectWebSocket() {
   ws.onopen = () => {
     console.log('Connected to Sentinel-X Gateway');
     
-    // Begin continuous visual delta capture at 1 FPS
+    // Begin continuous multimodal capture at 1 FPS
     captureInterval = setInterval(() => {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (tabs.length > 0) {
-          chrome.tabs.captureVisibleTab(tabs[0].windowId, { format: 'jpeg', quality: 50 }, (dataUrl) => {
-            if (chrome.runtime.lastError) return; // Ignore protected tabs
-            if (dataUrl && ws.readyState === WebSocket.OPEN) {
-              ws.send(dataUrl);
-            }
+          const tabId = tabs[0].id;
+          
+          // First, extract the DOM
+          chrome.scripting.executeScript({
+            target: { tabId: tabId },
+            func: () => document.documentElement.outerHTML
+          }, (results) => {
+            if (chrome.runtime.lastError || !results || !results[0]) return;
+            const dom = results[0].result;
+            
+            // Second, capture the visual frame
+            chrome.tabs.captureVisibleTab(tabs[0].windowId, { format: 'jpeg', quality: 50 }, (dataUrl) => {
+              if (chrome.runtime.lastError) return;
+              if (dataUrl && ws.readyState === WebSocket.OPEN) {
+                // Send the true multimodal payload
+                ws.send(JSON.stringify({ image: dataUrl, dom: dom }));
+              }
+            });
           });
         }
       });

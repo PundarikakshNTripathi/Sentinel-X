@@ -19,7 +19,7 @@ class StreamInterceptor:
         api_key = os.getenv("CEREBRAS_API_KEY")
         self.client = AsyncCerebras(api_key=api_key)
 
-    async def analyze_stream(self, base64_image: str):
+    async def analyze_stream(self, base64_image: str, dom_content: str = ""):
         schema = {
             "type": "object",
             "properties": {
@@ -30,8 +30,11 @@ class StreamInterceptor:
             "additionalProperties": False
         }
         
+        # Truncate DOM to prevent token overflow while preserving structure
+        truncated_dom = dom_content[:2000] if dom_content else "No DOM provided."
+        
         prompt = [
-            {"type": "text", "text": "Analyze this frame delta."},
+            {"type": "text", "text": f"Analyze this frame delta and its underlying HTML DOM structure. If you see phishing markers like malicious external endpoints or clone discrepancies, flag it as CRITICAL. HTML DOM Context: {truncated_dom}"},
             {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
         ]
         

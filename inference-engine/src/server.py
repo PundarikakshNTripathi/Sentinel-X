@@ -60,26 +60,39 @@ async def monitor_websocket(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
-            header, encoded = data.split(",", 1) if "," in data else ("", data)
-            img_bytes = base64.b64decode(encoded)
-            np_arr = np.frombuffer(img_bytes, np.uint8)
-            img = cv2.imdecode(np_arr, cv2.IMREAD_GRAYSCALE)
             
-            if img is None:
-                continue
+            # Now expecting a JSON payload from the extension containing both image and DOM
+            import json
+            try:
+                payload = json.loads(data)
+                encoded = payload.get("image", "")
+                dom_content = payload.get("dom", "")
                 
-            if prev_image is not None:
-                if img.shape == prev_image.shape:
-                    ssim_val = calculate_ssim(prev_image, img)
-                    # Compute structural difference
-                    if (1.0 - ssim_val) > 0.05:
-                        try:
-                            await interceptor.analyze_stream(encoded)
-                        except ThreatDetectedException:
-                            await websocket.send_text("LOCK")
-                            break
-            
-            prev_image = img
+                header, encoded = encoded.split(",", 1) if "," in encoded else ("", encoded)
+                if not encoded:
+                    continue
+                    
+                img_bytes = base64.b64decode(encoded)
+                np_arr = np.frombuffer(img_bytes, np.uint8)
+                img = cv2.imdecode(np_arr, cv2.IMREAD_GRAYSCALE)
+                
+                if img is None:
+                    continue
+                    
+                if prev_image is not None:
+                    if img.shape == prev_image.shape:
+                        ssim_val = calculate_ssim(prev_image, img)
+                        # Compute structural difference
+                        if (1.0 - ssim_val) > 0.05:
+                            try:
+                                await interceptor.analyze_stream(encoded, dom_content)
+                            except ThreatDetectedException:
+                                await websocket.send_text("LOCK")
+                                break
+                
+                prev_image = img
+            except Exception as e:
+                print(f"Error processing frame: {e}")
 
     except WebSocketDisconnect:
         pass

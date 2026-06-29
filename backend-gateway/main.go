@@ -6,6 +6,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/websocket"
 )
@@ -23,7 +24,12 @@ func handleConnection(w http.ResponseWriter, r *http.Request) {
 	defer clientConn.Close()
 
 	// Connect to Python FastAPI WebSocket
-	engineConn, _, err := websocket.DefaultDialer.Dial("ws://engine:8000/ws/monitor", nil)
+	engineUrl := os.Getenv("ENGINE_WS_URL")
+	if engineUrl == "" {
+		engineUrl = "ws://engine:8000/ws/monitor" // Local docker fallback
+	}
+
+	engineConn, _, err := websocket.DefaultDialer.Dial(engineUrl, nil)
 	if err != nil {
 		log.Println("Engine dial error:", err)
 		return
