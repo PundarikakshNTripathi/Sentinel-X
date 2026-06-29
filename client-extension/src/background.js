@@ -1,5 +1,5 @@
 function connectWebSocket() {
-  const ws = new WebSocket('ws://localhost:8080/ws/monitor');
+  const ws = new WebSocket('wss://sentinel-x-gateway.onrender.com/ws/monitor');
 
   ws.onopen = () => {
     console.log('Connected to Sentinel-X Gateway');

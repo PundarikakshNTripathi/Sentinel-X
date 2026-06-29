@@ -124,9 +124,25 @@ docker compose up --build -d
 3. Click "Load unpacked" and select the `client-extension/` directory.
 4. Ensure your manifest permits `'wasm-unsafe-eval'` in the CSP.
 
-## Accessing the deployed version
+## Accessing the deployed version (Plug-and-Play Cloud Deployment)
 
-This section will be updated when the application is successfully deployed to a public cloud environment.
+To make Sentinel-X globally accessible without running local Docker containers, deploy the backend stack to a free-tier cloud provider like **Render**:
+
+1. **Deploy the Engine & Gateway:**
+   - Create a free account at [Render](https://render.com).
+   - Create a new **Web Service** and connect your GitHub repository.
+   - For the **Python Engine**: set the root directory to `inference-engine/`, runtime to `Docker`, and add your `CEREBRAS_API_KEY` in the Environment Variables.
+   - For the **Go Gateway**: create a second Web Service, set the root directory to `backend-gateway/`, and runtime to `Docker`. Ensure the `main.go` dialer points to the Python Engine's internal Render URL.
+
+2. **Package the Extension:**
+   - The extension has been pre-configured to connect to the cloud endpoint (`wss://sentinel-x-gateway.onrender.com/ws/monitor`).
+   - Compress the `client-extension/` directory into a `.zip` file.
+   - If you're developing locally on Windows, run: `Compress-Archive -Path client-extension\* -DestinationPath sentinel-x.zip`
+
+3. **Install the Extension:**
+   - Open Chrome and navigate to `chrome://extensions/`.
+   - Enable **Developer mode** in the top right corner.
+   - Drag and drop the `sentinel-x.zip` file into the window to install it instantly. You are now protected globally.
 
 ## Benchmarks and evaluation
 
