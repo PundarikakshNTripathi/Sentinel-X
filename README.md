@@ -2,11 +2,6 @@
 
 A production-grade, zero-latency multimodal endpoint security daemon engineered to intercept zero-day phishing, credential harvesting, and social engineering attacks pre-execution.
 
-[![License: Elastic 2.0](https://img.shields.io/badge/License-Elastic_2.0-blue.svg)](https://www.elastic.co/licensing/elastic-license)
-[![Built for](https://img.shields.io/badge/Built_for-Gemma_4_X_Cerebras_Hackathon-orange.svg)]()
-[![Go](https://img.shields.io/badge/Go-1.22+-00ADD8.svg)](https://golang.org/)
-[![Python](https://img.shields.io/badge/Python-3.12-3776AB.svg)](https://python.org/)
-
 ## Introduction
 
 Sentinel-X abandons reactive API polling loops in favor of a multimodal late-fusion architecture capable of securing users in real-time. By weaponizing the ultra-fast Time-To-First-Token (TTFT) capabilities of the Cerebras Inference API natively hosted on WSE-3 hardware, Sentinel-X utilizes speculative stream-parsing to lock a user's screen the exact millisecond a threat is semantically verified by Gemma 4 31B, dropping interception latency from standard multi-second delays down to sub-500ms bounds.
@@ -148,9 +143,14 @@ To make Sentinel-X globally accessible without running local Docker containers, 
    - If you're developing locally on Windows, run: `Compress-Archive -Path client-extension\* -DestinationPath sentinel-x.zip`
 
 3. **Install the Extension:**
+   - Extract the downloaded `sentinel-x.zip` file so you have a standard folder.
    - Open Chrome and navigate to `chrome://extensions/`.
    - Enable **Developer mode** in the top right corner.
-   - Drag and drop the `sentinel-x.zip` file into the window to install it instantly. You are now protected globally.
+   - Click **"Load unpacked"** and select the extracted `sentinel-x` folder. You are now protected globally.
+
+## Demonstrations and Video Testing
+
+For instructions on setting up a local Phishing Playground and recording a 60-second video demo of the Cerebras TTFT intercept, please see the [DEMO_GUIDE.md](DEMO_GUIDE.md).
 
 ## Benchmarks and evaluation
 
@@ -176,10 +176,10 @@ This project is distributed under the Elastic License 2.0.
 
 What this means:
 
-✅ You can view, use, and modify this code for your own internal use
-✅ You can share this project with attribution
-❌ You cannot provide the software to third parties as a hosted or managed service
-❌ You cannot circumvent the licensing limitations
+- [Yes] You can view, use, and modify this code for your own internal use
+- [Yes] You can share this project with attribution
+- [No] You cannot provide the software to third parties as a hosted or managed service
+- [No] You cannot circumvent the licensing limitations
 
 See [LICENSE](LICENSE) for the full legal text. This software is provided as-is without any warranties.
 

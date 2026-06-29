@@ -6,10 +6,25 @@
  * utilizes chrome.scripting to inject a high z-index blocking overlay, locking the tab.
  */
 function connectWebSocket() {
-  const ws = new WebSocket('wss://sentinel-x-gateway.onrender.com/ws/monitor');
+  const ws = new WebSocket('wss://sentinel-x-backend-gateway.onrender.com/ws/monitor');
+  let captureInterval;
 
   ws.onopen = () => {
     console.log('Connected to Sentinel-X Gateway');
+    
+    // Begin continuous visual delta capture at 1 FPS
+    captureInterval = setInterval(() => {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs.length > 0) {
+          chrome.tabs.captureVisibleTab(tabs[0].windowId, { format: 'jpeg', quality: 50 }, (dataUrl) => {
+            if (chrome.runtime.lastError) return; // Ignore protected tabs
+            if (dataUrl && ws.readyState === WebSocket.OPEN) {
+              ws.send(dataUrl);
+            }
+          });
+        }
+      });
+    }, 1000);
   };
 
   ws.onmessage = (event) => {
@@ -31,6 +46,7 @@ function connectWebSocket() {
 
   ws.onclose = () => {
     console.log('Disconnected. Reconnecting in 5 seconds...');
+    clearInterval(captureInterval);
     setTimeout(connectWebSocket, 5000);
   };
   
