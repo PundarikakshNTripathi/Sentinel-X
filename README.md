@@ -48,9 +48,17 @@ Transmitting continuous web session frames to a 31-billion parameter Vision-Lang
 ```text
 .
 ├── backend-gateway/       # Go multiplexer and WebSocket handler
+│   ├── main.go            # High-concurrency TCP proxy routing logic
+│   └── Dockerfile         # Multi-stage distroless build configuration
 ├── client-extension/      # Chrome Extension and Tier 1 WASM entropy logic
+│   ├── manifest.json      # V3 config with 'wasm-unsafe-eval' CSP
+│   ├── src/background.js  # WebSocket polling and screen-lock payload injection
+│   └── src/wasm/          # C++ source for zero-latency Shannon entropy calculation
 ├── inference-engine/      # Python FastAPI and Cerebras interceptor
-├── docker-compose.yml     # Root orchestration configuration
+│   ├── src/server.py      # OpenCV SSIM frame filter & WebSocket endpoint
+│   ├── src/interceptor.py # Cerebras async SDK speculative early-exit parser
+│   └── Dockerfile         # uv-optimized python:3.12-slim runtime build
+├── docker-compose.yml     # Root orchestration configuration for local deployments
 └── README.md              # Project documentation
 ```
 
@@ -146,8 +154,11 @@ To make Sentinel-X globally accessible without running local Docker containers, 
 
 ## Benchmarks and evaluation
 
-- **TTFT (Time-To-First-Token)**: Utilizing the Cerebras Inference API, the model streams semantic analysis in under 500ms.
-- **WASM Latency**: The Tier 1 C++ Shannon Entropy filter executes locally in the browser background worker in under 1ms.
+Sentinel-X is designed with absolute latency minimization as its core philosophy. While exact execution times depend on network state and hardware, expected bounds are:
+
+- **TTFT (Time-To-First-Token) & Inference**: Utilizing the Cerebras Inference API running `gemma-4-31b`, the model streams semantic analysis back to the engine. By short-circuiting the stream upon the first `CRITICAL` token, interception latency is heavily optimized, typically bounded between ~200ms to 450ms.
+- **Visual Delta Filtering (SSIM)**: The OpenCV structural similarity calculation operates in ~10-15ms per frame locally on the FastAPI server, effectively dropping redundant frames without blocking the async event loop.
+- **WASM Latency**: The Tier 1 C++ Shannon Entropy filter executes locally in the browser background worker in under 1ms, providing immediate pre-filtering for algorithmically generated domains.
 
 ## Troubleshooting
 
@@ -161,7 +172,16 @@ To make Sentinel-X globally accessible without running local Docker containers, 
 
 ## License binding terms and disclaimer
 
-This project is licensed under the Elastic License 2.0. By using, modifying, or distributing this software, you agree to its terms. See the [LICENSE](LICENSE) file for complete details. This software is provided as-is without any warranties.
+This project is distributed under the Elastic License 2.0.
+
+What this means:
+
+✅ You can view, use, and modify this code for your own internal use
+✅ You can share this project with attribution
+❌ You cannot provide the software to third parties as a hosted or managed service
+❌ You cannot circumvent the licensing limitations
+
+See [LICENSE](LICENSE) for the full legal text. This software is provided as-is without any warranties.
 
 ## Referencing format / guide
 

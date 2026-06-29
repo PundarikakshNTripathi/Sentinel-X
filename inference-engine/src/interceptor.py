@@ -1,3 +1,9 @@
+"""
+StreamInterceptor handles the speculative early-exit logic by streaming responses
+from the Cerebras Inference API. By enforcing a strict JSON schema and reading SSE chunks,
+we can break the connection and immediately raise a threat the millisecond the "CRITICAL"
+token is generated, vastly reducing TTFT (Time-To-First-Token) latency.
+"""
 import os
 import asyncio
 from dotenv import load_dotenv

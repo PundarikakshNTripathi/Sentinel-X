@@ -1,3 +1,6 @@
+// Package main implements a highly concurrent TCP WebSocket multiplexer.
+// It intercepts edge connections from the browser extension and proxies them
+// directly into the Python Inference Engine, offloading connection management overhead.
 package main
 
 import (

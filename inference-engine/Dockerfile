@@ -59,5 +59,4 @@ EXPOSE 8000
 
 # Set entrypoint. This will run the basic main.py. 
 # Switch to the commented CMD below when the FastAPI app is ready in src.server
-# CMD ["uvicorn", "src.server:app", "--host", "0.0.0.0", "--port", "8000"]
-CMD ["python", "main.py"]
+CMD ["uvicorn", "src.server:app", "--host", "0.0.0.0", "--port", "8000"]
