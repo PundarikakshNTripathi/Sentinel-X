@@ -1,0 +1,24 @@
+services:
+  gateway:
+    build:
+      context: ./backend-gateway
+    ports:
+      - "8080:8080"
+    networks:
+      - sentinel-net
+    depends_on:
+      - engine
+    restart: unless-stopped
+
+  engine:
+    build:
+      context: ./inference-engine
+    networks:
+      - sentinel-net
+    expose:
+      - "8000"
+    restart: unless-stopped
+
+networks:
+  sentinel-net:
+    driver: bridge
