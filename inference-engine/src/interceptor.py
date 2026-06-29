@@ -55,10 +55,15 @@ class StreamInterceptor:
             }
         )
 
+        # Fatal Flaw Fix: Accumulate the stream! SSE chunks are fragmented. 
+        # The token "CRITICAL" will almost certainly arrive split across multiple chunks (e.g., "CR" -> "ITI" -> "CAL").
+        # Evaluating individual deltas for the full string is a fatal logic error.
+        accumulated_stream = ""
         async for chunk in response:
             if chunk.choices and chunk.choices[0].delta.content:
                 content = chunk.choices[0].delta.content
-                if "CRITICAL" in content:
+                accumulated_stream += content
+                if "CRITICAL" in accumulated_stream:
                     raise ThreatDetectedException("Threat detected in stream!")
         
         return "SAFE"

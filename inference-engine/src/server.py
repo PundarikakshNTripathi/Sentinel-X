@@ -80,15 +80,24 @@ async def monitor_websocket(websocket: WebSocket):
                     continue
                     
                 if prev_image is not None:
+                    trigger_analysis = False
+                    
                     if img.shape == prev_image.shape:
                         ssim_val = calculate_ssim(prev_image, img)
                         # Compute structural difference (Highly sensitive for demo: > 0.001)
                         if (1.0 - ssim_val) > 0.001:
-                            try:
-                                await interceptor.analyze_stream(encoded, dom_content)
-                            except ThreatDetectedException:
-                                await websocket.send_text("LOCK")
-                                break
+                            trigger_analysis = True
+                    else:
+                        # Fatal Flaw Fix: If the user maximizes/resizes the window, the shape changes.
+                        # Instead of silently dropping the frame, this is a massive visual delta that must be analyzed!
+                        trigger_analysis = True
+                        
+                    if trigger_analysis:
+                        try:
+                            await interceptor.analyze_stream(encoded, dom_content)
+                        except ThreatDetectedException:
+                            await websocket.send_text("LOCK")
+                            break
                 
                 prev_image = img
             except Exception as e:
