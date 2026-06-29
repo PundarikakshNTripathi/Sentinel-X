@@ -1,34 +1,69 @@
-let ws = new WebSocket("ws://localhost:8080/ws/monitor");
+function connectWebSocket() {
+  const ws = new WebSocket('ws://localhost:8080/ws/monitor');
 
-ws.onmessage = (event) => {
-    let data = JSON.parse(event.data);
-    if (data.action === "LOCK_SCREEN") {
-        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-            chrome.scripting.executeScript({
-                target: {tabId: tabs.id},
-                func: injectBlastShield
-            });
-        });
+  ws.onopen = () => {
+    console.log('Connected to Sentinel-X Gateway');
+  };
+
+  ws.onmessage = (event) => {
+    console.log('Received message:', event.data);
+    const data = event.data;
+    
+    // Support either direct 'CRITICAL' / 'LOCK' string or JSON action payload
+    if (data.includes('CRITICAL') || data.includes('LOCK_SCREEN') || data.includes('LOCK')) {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs.length > 0) {
+          chrome.scripting.executeScript({
+            target: { tabId: tabs[0].id },
+            func: injectWarningOverlay
+          });
+        }
+      });
     }
-};
+  };
 
-function injectBlastShield() {
-    let shield = document.createElement("div");
-    shield.style.position = "fixed";
-    shield.style.top = "0";
-    shield.style.left = "0";
-    shield.style.width = "100vw";
-    shield.style.height = "100vh";
-    shield.style.backgroundColor = "rgba(255, 0, 0, 0.85)";
-    shield.style.backdropFilter = "blur(10px)";
-    shield.style.zIndex = "999999";
-    shield.style.display = "flex";
-    shield.style.justifyContent = "center";
-    shield.style.alignItems = "center";
-    shield.style.color = "white";
-    shield.style.fontSize = "40px";
-    shield.style.fontWeight = "bold";
-    shield.style.fontFamily = "sans-serif";
-    shield.innerText = "CRITICAL THREAT BLOCKED BY SENTINEL-X";
-    document.body.appendChild(shield);
+  ws.onclose = () => {
+    console.log('Disconnected. Reconnecting in 5 seconds...');
+    setTimeout(connectWebSocket, 5000);
+  };
+  
+  ws.onerror = (error) => {
+    console.error('WebSocket Error:', error);
+  };
 }
+
+function injectWarningOverlay() {
+  if (document.getElementById('sentinel-warning-overlay')) return;
+  
+  const overlay = document.createElement('div');
+  overlay.id = 'sentinel-warning-overlay';
+  overlay.style.position = 'fixed';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100vw';
+  overlay.style.height = '100vh';
+  overlay.style.backgroundColor = 'rgba(255, 0, 0, 0.9)';
+  overlay.style.color = 'white';
+  overlay.style.zIndex = '999999';
+  overlay.style.display = 'flex';
+  overlay.style.flexDirection = 'column';
+  overlay.style.justifyContent = 'center';
+  overlay.style.alignItems = 'center';
+  overlay.style.fontFamily = 'system-ui, sans-serif';
+  
+  const heading = document.createElement('h1');
+  heading.innerText = '⚠️ CRITICAL THREAT DETECTED';
+  heading.style.fontSize = '4rem';
+  heading.style.fontWeight = 'bold';
+  heading.style.marginBottom = '20px';
+  
+  const subtext = document.createElement('p');
+  subtext.innerText = 'Sentinel-X has intercepted a malicious action. This session has been locked.';
+  subtext.style.fontSize = '1.5rem';
+  
+  overlay.appendChild(heading);
+  overlay.appendChild(subtext);
+  document.body.appendChild(overlay);
+}
+
+connectWebSocket();
