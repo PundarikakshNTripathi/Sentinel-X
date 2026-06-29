@@ -9,7 +9,8 @@ class ThreatDetectedException(Exception):
 
 class StreamInterceptor:
     def __init__(self):
-        load_dotenv()
+        env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+        load_dotenv(dotenv_path=env_path)
         api_key = os.getenv("CEREBRAS_API_KEY", "mock_key")
         self.client = AsyncCerebras(api_key=api_key)
 
@@ -29,8 +30,12 @@ class StreamInterceptor:
                 {"role": "system", "content": "Analyze the input and determine the threat level."},
                 {"role": "user", "content": prompt}
             ],
-            model="llama3.1-8b",
+            model="gpt-oss-120b",
             stream=True,
+            max_completion_tokens=32768,
+            temperature=1,
+            top_p=1,
+            reasoning_effort="medium",
             response_format={
                 "type": "json_schema",
                 "json_schema": {

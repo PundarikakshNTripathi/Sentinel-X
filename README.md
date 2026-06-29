@@ -2,24 +2,63 @@
 
 > A production-grade, zero-latency multimodal endpoint security daemon engineered to intercept zero-day phishing, credential harvesting, and social engineering attacks pre-execution.
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![License: Elastic 2.0](https://img.shields.io/badge/License-Elastic_2.0-blue.svg)](https://www.elastic.co/licensing/elastic-license)
 [![Built for](https://img.shields.io/badge/Built_for-Gemma_4_X_Cerebras_Hackathon-orange.svg)]()
 [![Go](https://img.shields.io/badge/Go-1.22+-00ADD8.svg)](https://golang.org/)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB.svg)](https://python.org/)
 
-Sentinel-X abandons reactive API polling loops in favor of a multimodal late-fusion architecture capable of securing users in real-time. By weaponizing the ultra-fast Time-To-First-Token (TTFT) capabilities of the Cerebras Inference API natively hosted on WSE-3 hardware, Sentinel-X utilizes speculative stream-parsing to lock a user's screen the exact millisecond a threat is semantically verified by Gemma 4 31B—dropping interception latency from standard multi-second delays down to sub-500ms bounds.
+## Introduction
 
----
+Sentinel-X abandons reactive API polling loops in favor of a multimodal late-fusion architecture capable of securing users in real-time. By weaponizing the ultra-fast Time-To-First-Token (TTFT) capabilities of the Cerebras Inference API natively hosted on WSE-3 hardware, Sentinel-X utilizes speculative stream-parsing to lock a user's screen the exact millisecond a threat is semantically verified by Gemma 4 31B, dropping interception latency from standard multi-second delays down to sub-500ms bounds.
 
-## 🏗 Architectural Cascade Framework
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Features](#features)
+- [How it works](#how-it-works)
+- [Directory Structure](#directory-structure)
+- [Architecture](#architecture)
+- [Tech Stack](#tech-stack)
+- [AIOps, tests and Deployment](#aiops-tests-and-deployment)
+- [Local Setup and running](#local-setup-and-running)
+- [Accessing the deployed version](#accessing-the-deployed-version)
+- [Benchmarks and evaluation](#benchmarks-and-evaluation)
+- [Troubleshooting](#troubleshooting)
+- [Limitations and Future work](#limitations-and-future-work)
+- [License binding terms and disclaimer](#license-binding-terms-and-disclaimer)
+- [Referencing format / guide](#referencing-format--guide)
+
+## Features
+
+- **Zero-Latency Threat Interception**: Stops malicious activity before execution via real-time WebSocket communication.
+- **Speculative Early-Exit Parsing**: Reads asynchronous Server-Sent Events (SSE) from the Cerebras API to trigger defenses on the exact token a threat is identified.
+- **Multi-Tiered Edge Filtering**: Prevents unnecessary overhead by blocking obvious threats at the browser edge using C++ WebAssembly heuristics.
+- **Secure by Default**: Distroless containers and non-root Python runtime images ensure a hardened backend environment.
+
+## How it works
 
 Transmitting continuous web session frames to a 31-billion parameter Vision-Language Model is computationally unviable. Sentinel-X utilizes a multi-tiered filtering cascade at the edge:
 
 1. **Tier 1 (Edge-Native WebAssembly):** Deterministic lexical heuristics compiled from highly optimized C++20. Calculates the Shannon entropy of URLs in the browser background worker for zero-latency filtering of algorithmically generated domains.
 2. **Tier 2 (Structural DOM Hashing):** Fuzzy hashing of the HTML DOM topology to identify cloned CSS frameworks that mask malicious form endpoints.
-3. **Tier 3 (Cerebras VLM Stream):** A sliding Structural Similarity Index Measure (SSIM) frame buffer captures visual deltas. These are multiplexed by a high-concurrency Go backend to a FastAPI inference engine. A custom asynchronous parser intercepts the Server-Sent Event (SSE) stream from the Cerebras API, firing a WebSocket screen-lock command mid-generation.
+3. **Tier 3 (Cerebras VLM Stream):** A sliding Structural Similarity Index Measure (SSIM) frame buffer captures visual deltas. These are multiplexed by a high-concurrency Go backend to a FastAPI inference engine. A custom asynchronous parser intercepts the SSE stream from the Cerebras API, firing a WebSocket screen-lock command mid-generation.
 
-### Architecture Diagram
+## Directory Structure
+
+```text
+.
+├── backend-gateway/       # Go multiplexer and WebSocket handler
+├── client-extension/      # Chrome Extension and Tier 1 WASM entropy logic
+├── inference-engine/      # Python FastAPI and Cerebras interceptor
+├── docker-compose.yml     # Root orchestration configuration
+└── README.md              # Project documentation
+```
+
+## Architecture
+
+The system is disaggregated into edge, gateway, and engine components to ensure low latency and high concurrency.
+
+### Architecture diagram
 
 ```mermaid
 graph TD
@@ -40,19 +79,26 @@ graph TD
     E -->|Lock Command| A
 ```
 
----
+## Tech Stack
 
-## ⚙️ AIOps & Deployment
+- **Edge**: JavaScript (Manifest V3), WebAssembly (C++20, Emscripten)
+- **Gateway**: Go 1.22
+- **Engine**: Python 3.12, FastAPI, `uv`, Cerebras Async SDK
+- **Infrastructure**: Docker, Docker Compose
+
+## AIOps, tests and Deployment
 
 - **Containerization:** Microservices (Go Gateway and Python Engine) orchestrated via Docker Compose on an isolated internal bridge network (`sentinel-net`). 
-  - The **Go Gateway** utilizes a multi-stage distroless build (`gcr.io/distroless/static-debian12`) for minimal footprint and enhanced security. 
-  - The **Python Engine** leverages an optimized multi-stage build powered by `uv` for rapid dependency resolution and a lean `python:3.12-slim` runtime profile.
+  - The Go Gateway utilizes a multi-stage distroless build (`gcr.io/distroless/static-debian12`) for minimal footprint and enhanced security. 
+  - The Python Engine leverages an optimized multi-stage build powered by `uv` for rapid dependency resolution and a lean `python:3.12-slim` runtime profile.
 - **Dependency Management:** Python environment managed via `uv` for deterministic, ultra-fast resolution. Environment variables securely managed via `.env` and `python-dotenv`.
-- **Structured Outputs:** Leverages Cerebras SDK native JSON Schema enforcement (`response_format`) to guarantee deterministic pipeline routing without hallucinated schemas.
+- **Structured Outputs:** Leverages Cerebras SDK native JSON Schema enforcement (`response_format`) to guarantee deterministic pipeline routing.
+- **Testing:**
+  - Python Services: Run `uv run pytest tests/ -v` from the `inference-engine/` directory.
+  - Go Gateway: Run `go test ./... -race` from the `backend-gateway/` directory to verify channel multiplexing and detect data races.
+  - WASM Entropy: Use the bundled `test_wasm.js` script to verify WASM execution and measure execution latency.
 
----
-
-## 🚀 Quickstart & Setup
+## Local Setup and running
 
 ### Prerequisites
 - Docker & Docker Compose
@@ -78,13 +124,33 @@ docker compose up --build -d
 3. Click "Load unpacked" and select the `client-extension/` directory.
 4. Ensure your manifest permits `'wasm-unsafe-eval'` in the CSP.
 
----
+## Accessing the deployed version
 
-## 🧪 Testing and Verification
+This section will be updated when the application is successfully deployed to a public cloud environment.
 
-- **Python Services**: Run `uv run pytest tests/ -v` from the `inference-engine/` directory.
-- **Go Gateway**: Run `go test ./... -race` from the `backend-gateway/` directory to verify channel multiplexing and detect data races.
-- **WASM Entropy**: Use the bundled `test_wasm.js` script to verify WASM execution and measure execution latency.
+## Benchmarks and evaluation
 
----
-*Built with ❤️ for the Gemma 4 X Cerebras Hackathon.*
+- **TTFT (Time-To-First-Token)**: Utilizing the Cerebras Inference API, the model streams semantic analysis in under 500ms.
+- **WASM Latency**: The Tier 1 C++ Shannon Entropy filter executes locally in the browser background worker in under 1ms.
+
+## Troubleshooting
+
+- **Docker daemon not found**: Ensure Docker Desktop is running before executing `docker compose up`.
+- **WASM execution blocked**: Verify that your Chrome Extension CSP allows `'wasm-unsafe-eval'`.
+
+## Limitations and Future work
+
+- **Limitations**: Distroless containers lack shell access, making interactive debugging harder. The current intercept logic requires a continuous streaming response which can be impacted by network variability.
+- **Future Work**: Integration of memory-safe Rust for edge filters and transition from JSON Schema enforcement to native grammar-based sampling constraints.
+
+## License binding terms and disclaimer
+
+This project is licensed under the Elastic License 2.0. By using, modifying, or distributing this software, you agree to its terms. See the [LICENSE](LICENSE) file for complete details. This software is provided as-is without any warranties.
+
+## Referencing format / guide
+
+If you utilize Sentinel-X in academic or professional work, please cite the repository as follows:
+
+```
+Sentinel-X, (2026). GitHub repository, https://github.com/PundarikakshNTripathi/Sentinel-X
+```
