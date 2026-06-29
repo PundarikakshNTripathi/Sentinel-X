@@ -41,7 +41,7 @@ Transmitting continuous web session frames to a 31-billion parameter Vision-Lang
 
 1. **Tier 1 (Edge-Native WebAssembly):** Deterministic lexical heuristics compiled from highly optimized C++20. Calculates the Shannon entropy of URLs in the browser background worker for zero-latency filtering of algorithmically generated domains.
 2. **Tier 2 (Structural DOM Hashing):** Fuzzy hashing of the HTML DOM topology to identify cloned CSS frameworks that mask malicious form endpoints.
-3. **Tier 3 (Cerebras VLM Stream):** A sliding Structural Similarity Index Measure (SSIM) frame buffer captures visual deltas. These are multiplexed by a high-concurrency Go backend to a FastAPI inference engine. A custom asynchronous parser intercepts the SSE stream from the Cerebras API, firing a WebSocket screen-lock command mid-generation.
+3. **Tier 3 (Cerebras VLM Stream):** A custom OpenCV Gaussian SSIM (Structural Similarity) frame buffer captures visual deltas (>0.05 variance) to optimize payload overhead. These are multiplexed by a high-concurrency Go proxy backend to a FastAPI inference engine. A custom asynchronous parser intercepts the SSE stream from the Cerebras API (running `gemma-4-31b`), firing a WebSocket screen-lock command mid-generation if 'CRITICAL' is flagged.
 
 ## Directory Structure
 

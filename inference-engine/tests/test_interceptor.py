@@ -24,8 +24,9 @@ class MockAsyncResponse:
 
 class MockCompletions:
     async def create(self, **kwargs):
-        prompt = kwargs['messages'][1]['content']
-        if "bad" in prompt:
+        prompt_data = kwargs['messages'][1]['content']
+        img_url = prompt_data[1]['image_url']['url']
+        if "bad" in img_url:
             return MockAsyncResponse([
                 MockChunk('{"threat_level": "'),
                 MockChunk('CRITICAL'),

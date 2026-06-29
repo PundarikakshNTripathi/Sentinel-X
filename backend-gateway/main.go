@@ -1,10 +1,9 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"log"
 	"net/http"
+
 	"github.com/gorilla/websocket"
 )
 
@@ -12,39 +11,57 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
-type Message struct {
-	Image string `json:"image"`
-}
-
 func handleConnection(w http.ResponseWriter, r *http.Request) {
-	ws, err := upgrader.Upgrade(w, r, nil)
-	if err!= nil {
+	clientConn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
 		log.Println("Upgrade error:", err)
 		return
 	}
-	defer ws.Close()
+	defer clientConn.Close()
 
-	for {
-		var msg Message
-		err := ws.ReadJSON(&msg)
-		if err!= nil {
-			break
-		}
+	// Connect to Python FastAPI WebSocket
+	engineConn, _, err := websocket.DefaultDialer.Dial("ws://engine:8000/ws/monitor", nil)
+	if err != nil {
+		log.Println("Engine dial error:", err)
+		return
+	}
+	defer engineConn.Close()
 
-		// Forward to Python FastAPI
-		payload, _ := json.Marshal(map[string]string{"image_base64": msg.Image})
-		resp, err := http.Post("http://engine:8000/analyze", "application/json", bytes.NewBuffer(payload))
-		
-		if err == nil {
-			var result map[string]string
-			json.NewDecoder(resp.Body).Decode(&result)
-			resp.Body.Close()
+	errc := make(chan error, 2)
 
-			if result["status"] == "CRITICAL" {
-				ws.WriteJSON(map[string]string{"action": "LOCK_SCREEN"})
+	// Proxy client -> engine
+	go func() {
+		for {
+			mt, message, err := clientConn.ReadMessage()
+			if err != nil {
+				errc <- err
+				return
+			}
+			err = engineConn.WriteMessage(mt, message)
+			if err != nil {
+				errc <- err
+				return
 			}
 		}
-	}
+	}()
+
+	// Proxy engine -> client
+	go func() {
+		for {
+			mt, message, err := engineConn.ReadMessage()
+			if err != nil {
+				errc <- err
+				return
+			}
+			err = clientConn.WriteMessage(mt, message)
+			if err != nil {
+				errc <- err
+				return
+			}
+		}
+	}()
+
+	<-errc
 }
 
 func main() {
