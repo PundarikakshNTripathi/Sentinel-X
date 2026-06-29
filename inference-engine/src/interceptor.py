@@ -39,7 +39,7 @@ class StreamInterceptor:
         ]
         
         response = await self.client.chat.completions.create(
-            model="gemma-4-31b",
+            model="llama3.1-8b",
             messages=[
                 {"role": "system", "content": "Analyze the input and determine the threat level."},
                 {"role": "user", "content": prompt}

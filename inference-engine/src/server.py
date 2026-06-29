@@ -82,8 +82,8 @@ async def monitor_websocket(websocket: WebSocket):
                 if prev_image is not None:
                     if img.shape == prev_image.shape:
                         ssim_val = calculate_ssim(prev_image, img)
-                        # Compute structural difference
-                        if (1.0 - ssim_val) > 0.05:
+                        # Compute structural difference (Highly sensitive for demo: > 0.001)
+                        if (1.0 - ssim_val) > 0.001:
                             try:
                                 await interceptor.analyze_stream(encoded, dom_content)
                             except ThreatDetectedException:

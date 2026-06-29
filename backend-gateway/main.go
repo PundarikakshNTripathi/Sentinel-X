@@ -32,6 +32,7 @@ func handleConnection(w http.ResponseWriter, r *http.Request) {
 	engineConn, _, err := websocket.DefaultDialer.Dial(engineUrl, nil)
 	if err != nil {
 		log.Println("Engine dial error:", err)
+		clientConn.WriteMessage(websocket.TextMessage, []byte("GATEWAY_ERROR: Cannot reach Python Engine at " + engineUrl))
 		return
 	}
 	defer engineConn.Close()

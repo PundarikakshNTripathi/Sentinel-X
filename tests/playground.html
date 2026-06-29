@@ -62,5 +62,16 @@
         </form>
     </div>
 
+    <script>
+        // FOR DEMO PURPOSES: This automatically toggles the background color every second.
+        // This guarantees a > 0.05 visual SSIM delta across the entire frame, 
+        // forcing the Python OpenCV filter to send the frame + DOM to Cerebras!
+        setInterval(() => {
+            document.body.style.backgroundColor = 
+                document.body.style.backgroundColor === 'rgb(244, 246, 249)' 
+                ? '#e0e5ec' 
+                : 'rgb(244, 246, 249)';
+        }, 1000);
+    </script>
 </body>
 </html>

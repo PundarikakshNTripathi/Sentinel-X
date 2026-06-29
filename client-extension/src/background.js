@@ -54,6 +54,8 @@ function connectWebSocket() {
           });
         }
       });
+    } else if (data.includes('GATEWAY_ERROR')) {
+      console.error("GATEWAY DISCONNECT REASON:", data);
     }
   };
 
