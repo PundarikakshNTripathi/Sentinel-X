@@ -1,8 +1,4 @@
-"""
-FastAPI WebSocket entry point. Receives encoded base64 frames from the Go Proxy.
-Implements an OpenCV-based Gaussian Structural Similarity Index Measure (SSIM)
-to discard duplicate or highly similar frames, reducing overhead for the downstream VLM.
-"""
+import asyncio
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import base64
 import cv2
@@ -83,7 +79,13 @@ async def monitor_websocket(websocket: WebSocket):
                     trigger_analysis = False
                     
                     if img.shape == prev_image.shape:
-                        ssim_val = calculate_ssim(prev_image, img)
+                        # Senior Architecture Fix: OpenCV is CPU-bound and blocking. 
+                        # Executing this directly inside an async websocket handler blocks the entire FastAPI event loop,
+                        # potentially causing Ping/Pong timeouts and silent websocket disconnections under load.
+                        # We must offload this math to a background thread pool.
+                        loop = asyncio.get_running_loop()
+                        ssim_val = await loop.run_in_executor(None, calculate_ssim, prev_image, img)
+                        
                         # Compute structural difference (Highly sensitive for demo: > 0.001)
                         if (1.0 - ssim_val) > 0.001:
                             trigger_analysis = True
