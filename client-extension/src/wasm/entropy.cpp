@@ -1,3 +1,8 @@
+/**
+ * Calculates the Shannon entropy of a given string (e.g., a URL payload) to quickly
+ * detect high-entropy, algorithmically generated domains (DGAs) typical of phishing.
+ * Executed via WebAssembly at the edge to ensure zero latency overhead.
+ */
 #include <emscripten.h>
 #include <string>
 #include <cmath>

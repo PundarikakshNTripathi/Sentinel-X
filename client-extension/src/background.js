@@ -1,3 +1,10 @@
+/**
+ * Sentinel-X Background Service Worker
+ * 
+ * Maintains a persistent WebSocket connection to the Go Proxy API Gateway.
+ * If a 'CRITICAL' threat token is intercepted by the backend VLM, this script instantly
+ * utilizes chrome.scripting to inject a high z-index blocking overlay, locking the tab.
+ */
 function connectWebSocket() {
   const ws = new WebSocket('wss://sentinel-x-gateway.onrender.com/ws/monitor');
 

@@ -1,3 +1,8 @@
+"""
+FastAPI WebSocket entry point. Receives encoded base64 frames from the Go Proxy.
+Implements an OpenCV-based Gaussian Structural Similarity Index Measure (SSIM)
+to discard duplicate or highly similar frames, reducing overhead for the downstream VLM.
+"""
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import base64
 import cv2
