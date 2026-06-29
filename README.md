@@ -1,6 +1,6 @@
 # Sentinel-X
 
-> A production-grade, zero-latency multimodal endpoint security daemon engineered to intercept zero-day phishing, credential harvesting, and social engineering attacks pre-execution.
+A production-grade, zero-latency multimodal endpoint security daemon engineered to intercept zero-day phishing, credential harvesting, and social engineering attacks pre-execution.
 
 [![License: Elastic 2.0](https://img.shields.io/badge/License-Elastic_2.0-blue.svg)](https://www.elastic.co/licensing/elastic-license)
 [![Built for](https://img.shields.io/badge/Built_for-Gemma_4_X_Cerebras_Hackathon-orange.svg)]()
