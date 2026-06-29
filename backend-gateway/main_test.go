@@ -5,7 +5,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"github.com/gorilla/websocket"
 )
 
 func TestHandleConnection(t *testing.T) {
